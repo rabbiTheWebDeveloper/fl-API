@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const oder_controller_1 = require("./oder.controller");
+const router = (0, express_1.Router)();
+router.get("/order-list", oder_controller_1.getAllOrder);
+router.get("/recent-order", oder_controller_1.getRecentOrder);
+router.get("/customer-list", oder_controller_1.getCustomerList);
+router.get("/order-list-summarize", oder_controller_1.getAllOrderSummarize);
+router.get("/order-list/:id", oder_controller_1.getOrderById);
+router.get("/search/:search", oder_controller_1.getOrderByOrderSearch);
+router.get("/order-status-filter/:status", oder_controller_1.getOrderByOrderStatus);
+router.post("/create-order", oder_controller_1.createOrder);
+router.post("/order-status-update/:id", oder_controller_1.updateOrderStatus);
+router.post("/order-tracking-update/:id", oder_controller_1.updateOrderTraking);
+router.get("/order-filter/:date", oder_controller_1.getAllOrderFilterDates);
+exports.default = router;
