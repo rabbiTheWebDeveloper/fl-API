@@ -29,7 +29,6 @@ const categorysSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
-        trim: true,
     },
     shopId: {
         type: String,
@@ -59,6 +58,6 @@ const categorysSchema = new mongoose_1.Schema({
     },
 }, {
     timestamps: true,
-    versionKey: false
+    versionKey: false,
 });
 exports.Categorys = mongoose_1.default.model("Category", categorysSchema);

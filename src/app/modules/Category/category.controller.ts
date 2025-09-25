@@ -1,89 +1,70 @@
 import { NextFunction, Request, Response } from "express";
 import { sendApiResponse } from "../../utlis/responseHandler";
-import {categorydeleteService, createCategoryFromDB, getCategoryByIdDB, getCategoryDB, updateCategoryFromDB } from "./category.service";
-import mongoose from "mongoose";
-import { validationResult } from "express-validator";
+import { createCategoryFromDB } from "./category.service";
+import slugify from "slugify";
+import ImageKit from "imagekit";
+import { Categorys } from "./category.model";
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY as string,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY as string,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT as string,
+});
 
+export const generateUniqueSlug = async (name: string): Promise<string> => {
+  const baseSlug = slugify(name, { lower: true, strict: true });
+  const existing = await Categorys.find(
+    { slug: { $regex: `^${baseSlug}(-\\d+)?$`, $options: "i" } },
+    { slug: 1 }
+  );
 
-export const getCategorys = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const products = await getCategoryDB();
-  sendApiResponse(res, 200, true, products);
+  if (!existing.length) return baseSlug;
+
+  // Extract numeric suffixes
+  const numbers = existing.map((doc) => {
+    const match = doc.slug.match(/-(\d+)$/);
+    return match ? parseInt(match[1], 10) : 0;
+  });
+
+  const maxNum = Math.max(...numbers);
+
+  return `${baseSlug}-${maxNum + 1}`;
 };
 
-export const getCategorysByID = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-
-  const { id } = req.params;
-  const products = await getCategoryByIdDB(id);
-  sendApiResponse(res, 200, true, products);
-};
-
-export const deleteCategory = async (
+export const addCategory = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const { name } = req.body;
+    if (!name || typeof name !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category name is required" });
+    }
+    let imageUrl = "";
+    const slug = await generateUniqueSlug(name);
+    if (req.file) {
+      const uploadResponse = await imagekit.upload({
+        file: req.file.buffer.toString("base64"),
+        fileName: `${slugify(name || "category", {
+          lower: true,
+        })}-${Date.now()}.jpg`,
+        folder: "/categories",
+      });
 
-    // Validate the 'id' parameter (you can use mongoose.Types.ObjectId.isValid())
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid category ID' });
+      imageUrl = uploadResponse.url;
     }
 
-    // Delete the category using categorydeleteService
-    const products = await categorydeleteService(id);
+    const payload = {
+      ...req.body,
+      slug,
+      image: imageUrl,
+    };
 
-    // Send a success response with 204 No Content status
-    res.status(204).send();
+    const category = await createCategoryFromDB(payload);
+    sendApiResponse(res, 200, true, category);
   } catch (error) {
-    // Handle errors gracefully
-    console.error('Error deleting category:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    next(error);
   }
 };
-
-export const addCategory = async (req: Request,res: Response,next: NextFunction
-  ) => {
-    const payload = req.body;
-    const product = await createCategoryFromDB( payload);
-    sendApiResponse(res, 200, true, product);
-  };
-
-  export const updateCategory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const { id } = req.params;
-      const payload = req.body;
-  
-      // Validate the request payload
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-  
-      // Update the category using categoryService
-      const updatedCategory = await updateCategoryFromDB(id, payload);
-  
-      if (!updatedCategory) {
-        return res.status(404).json({ success: false, message: 'Category not found' });
-      }
-  
-      // Send a success response with the updated category
-      res.status(200).json({ success: true, data: updatedCategory });
-    } catch (error) {
-      // Handle errors gracefully
-      console.error('Error updating category:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  };

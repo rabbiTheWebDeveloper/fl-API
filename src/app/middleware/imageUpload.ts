@@ -1,10 +1,9 @@
 // middlewares/imageUpload.ts
-import multer from 'multer';
+import multer from "multer";
 
-// Set up multer storage
-const storage = multer.diskStorage({});
+// Store file in memory (gives access to req.file.buffer)
+const storage = multer.memoryStorage();
 
-// Initialize multer upload
 const upload = multer({ storage });
 
 export default upload;

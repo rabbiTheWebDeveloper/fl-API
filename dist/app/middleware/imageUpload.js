@@ -5,8 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // middlewares/imageUpload.ts
 const multer_1 = __importDefault(require("multer"));
-// Set up multer storage
-const storage = multer_1.default.diskStorage({});
-// Initialize multer upload
+// Store file in memory (gives access to req.file.buffer)
+const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({ storage });
 exports.default = upload;

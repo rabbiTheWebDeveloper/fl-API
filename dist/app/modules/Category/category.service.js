@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.categorydeleteService = exports.updateCategoryFromDB = exports.createCategoryFromDB = exports.getCategoryByIdDB = exports.getCategoryDB = void 0;
 const category_model_1 = require("./category.model");
 const getCategoryDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    return category_model_1.Categorys.find().sort({ createdAt: -1, });
+    return category_model_1.Categorys.find().sort({ createdAt: -1 });
 });
 exports.getCategoryDB = getCategoryDB;
 const getCategoryByIdDB = (id) => __awaiter(void 0, void 0, void 0, function* () {

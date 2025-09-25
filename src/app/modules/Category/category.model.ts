@@ -1,13 +1,11 @@
 import mongoose, { Schema } from "mongoose";
 import { ICategory } from "./category.interface";
 
-
 const categorysSchema = new Schema<ICategory>(
   {
     name: {
       type: String,
       required: true,
-      trim: true,
     },
     shopId: {
       type: String,
@@ -27,7 +25,7 @@ const categorysSchema = new Schema<ICategory>(
       default: "",
     },
     image: {
-      type: String, 
+      type: String,
       default: "",
     },
     status: {
@@ -38,9 +36,8 @@ const categorysSchema = new Schema<ICategory>(
   },
   {
     timestamps: true,
-    versionKey:false
-  } 
-  
+    versionKey: false,
+  }
 );
 
 export const Categorys = mongoose.model<ICategory>("Category", categorysSchema);
