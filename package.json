@@ -50,5 +50,8 @@
     "ts.check",
     "build",
     "add-build"
-  ]
+  ],
+  "overrides": {
+    "cross-spawn": "^7.0.0"
+  }
 }

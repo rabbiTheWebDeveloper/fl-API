@@ -29,12 +29,36 @@ const categorysSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
+        trim: true,
+    },
+    shopId: {
+        type: String,
+        required: true,
+    },
+    userId: {
+        type: String,
+    },
+    slug: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
     },
     description: {
         type: String,
-    }
+        default: "",
+    },
+    image: {
+        type: String,
+        default: "",
+    },
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active",
+    },
 }, {
     timestamps: true,
     versionKey: false
 });
-exports.Categorys = mongoose_1.default.model("categorys", categorysSchema);
+exports.Categorys = mongoose_1.default.model("Category", categorysSchema);
