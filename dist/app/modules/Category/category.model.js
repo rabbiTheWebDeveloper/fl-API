@@ -52,9 +52,7 @@ const categorysSchema = new mongoose_1.Schema({
     },
     slug: {
         type: String,
-        required: true,
         unique: true,
-        lowercase: true,
     },
     description: {
         type: String,
@@ -79,7 +77,7 @@ categorysSchema.pre("save", function (next) {
             const baseSlug = (0, slugify_1.default)(this.name, { lower: true, strict: true });
             // Find the slug with the highest number for this baseSlug
             const regex = new RegExp(`^${baseSlug}(-[0-9]+)?$`, "i");
-            const lastSlug = yield mongoose_1.default.models.Categorys.findOne({ slug: regex })
+            const lastSlug = yield mongoose_1.default.models.Category.findOne({ slug: regex })
                 .sort({ slug: -1 }) // get the "last" one
                 .select("slug");
             if (!lastSlug) {

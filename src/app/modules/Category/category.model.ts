@@ -17,9 +17,7 @@ const categorysSchema = new Schema<ICategory>(
     },
     slug: {
       type: String,
-      required: true,
       unique: true,
-      lowercase: true,
     },
     description: {
       type: String,
@@ -48,7 +46,7 @@ categorysSchema.pre("save", async function (next) {
     // Find the slug with the highest number for this baseSlug
     const regex = new RegExp(`^${baseSlug}(-[0-9]+)?$`, "i");
 
-    const lastSlug = await mongoose.models.Categorys.findOne({ slug: regex })
+    const lastSlug = await mongoose.models.Category.findOne({ slug: regex })
       .sort({ slug: -1 }) // get the "last" one
       .select("slug");
 
