@@ -22,9 +22,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Categorys = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const slugify_1 = __importDefault(require("slugify"));
 const categorysSchema = new mongoose_1.Schema({
     name: {
         type: String,
@@ -59,5 +72,27 @@ const categorysSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
     versionKey: false,
+});
+categorysSchema.pre("save", function (next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (this.isModified("name")) {
+            const baseSlug = (0, slugify_1.default)(this.name, { lower: true, strict: true });
+            // Find the slug with the highest number for this baseSlug
+            const regex = new RegExp(`^${baseSlug}(-[0-9]+)?$`, "i");
+            const lastSlug = yield mongoose_1.default.models.Categorys.findOne({ slug: regex })
+                .sort({ slug: -1 }) // get the "last" one
+                .select("slug");
+            if (!lastSlug) {
+                this.slug = baseSlug;
+            }
+            else {
+                const match = lastSlug.slug.match(/-(\d+)$/);
+                const lastNumber = match ? parseInt(match[1], 10) : 0;
+                this.slug =
+                    lastNumber === 0 ? `${baseSlug}-1` : `${baseSlug}-${lastNumber + 1}`;
+            }
+        }
+        next();
+    });
 });
 exports.Categorys = mongoose_1.default.model("Category", categorysSchema);

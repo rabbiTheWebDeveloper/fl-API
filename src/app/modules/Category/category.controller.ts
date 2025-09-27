@@ -10,25 +10,6 @@ const imagekit = new ImageKit({
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT as string,
 });
 
-export const generateUniqueSlug = async (name: string): Promise<string> => {
-  const baseSlug = slugify(name, { lower: true, strict: true });
-  const existing = await Categorys.find(
-    { slug: { $regex: `^${baseSlug}(-\\d+)?$`, $options: "i" } },
-    { slug: 1 }
-  );
-
-  if (!existing.length) return baseSlug;
-
-  // Extract numeric suffixes
-  const numbers = existing.map((doc) => {
-    const match = doc.slug.match(/-(\d+)$/);
-    return match ? parseInt(match[1], 10) : 0;
-  });
-
-  const maxNum = Math.max(...numbers);
-
-  return `${baseSlug}-${maxNum + 1}`;
-};
 
 export const addCategory = async (
   req: Request,
@@ -43,7 +24,7 @@ export const addCategory = async (
         .json({ success: false, message: "Category name is required" });
     }
     let imageUrl = "";
-    const slug = await generateUniqueSlug(name);
+   
     if (req.file) {
       const uploadResponse = await imagekit.upload({
         file: req.file.buffer.toString("base64"),
@@ -58,7 +39,6 @@ export const addCategory = async (
 
     const payload = {
       ...req.body,
-      slug,
       image: imageUrl,
     };
 
