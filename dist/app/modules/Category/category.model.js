@@ -77,7 +77,8 @@ const categorysSchema = new mongoose_1.Schema({
     timestamps: true,
     versionKey: false,
 });
-categorysSchema.index({ shopId: 1, name: 1 }, { unique: true });
+categorysSchema.index({ shopId: 1, userId: 1 }); // for filtering
+categorysSchema.index({ createdAt: -1 }); // for sorting
 categorysSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!this.isModified("name"))

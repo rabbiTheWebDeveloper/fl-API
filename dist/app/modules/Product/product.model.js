@@ -181,6 +181,7 @@ const productSchema = new mongoose_1.default.Schema({
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    versionKey: false,
 });
 // Virtual for calculating discounted price
 productSchema.virtual("calculatedDiscountPrice").get(function () {

@@ -43,7 +43,8 @@ const categorysSchema = new Schema<ICategory>(
     versionKey: false,
   }
 );
-categorysSchema.index({ shopId: 1, name: 1 }, { unique: true });
+categorysSchema.index({ shopId: 1, userId: 1 }); // for filtering
+categorysSchema.index({ createdAt: -1 }); // for sorting
 categorysSchema.pre("save", async function(next) {
   if (!this.isModified("name")) return next();
 
