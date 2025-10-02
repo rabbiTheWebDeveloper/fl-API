@@ -4,6 +4,7 @@
   userId?: string; // optional
   slug: string;
   description?: string; // optional
-  image?: string; // optional
+  image?: string;
+  imageFileId ?:string // optional
   status?: "active" | "inactive";
 }

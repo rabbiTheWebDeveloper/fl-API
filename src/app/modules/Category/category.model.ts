@@ -27,6 +27,10 @@ const categorysSchema = new Schema<ICategory>(
       type: String,
       default: "",
     },
+    imageFileId: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],
@@ -58,6 +62,31 @@ categorysSchema.pre("save", async function (next) {
       this.slug =
         lastNumber === 0 ? `${baseSlug}-1` : `${baseSlug}-${lastNumber + 1}`;
     }
+  }
+  next();
+});
+
+
+categorysSchema.pre("updateOne", async function (next) {
+  const update = this.getUpdate() as any;
+  if (update.name) {
+    const baseSlug = slugify(update.name, { lower: true, strict: true });
+    const regex = new RegExp(`^${baseSlug}(-[0-9]+)?$`, "i");
+
+    const lastSlug = await mongoose.models.Category.findOne({ slug: regex })
+      .sort({ slug: -1 })
+      .select("slug");
+
+    if (!lastSlug) {
+      update.slug = baseSlug;
+    } else {
+      const match = lastSlug.slug.match(/-(\d+)$/);
+      const lastNumber = match ? parseInt(match[1], 10) : 0;
+      update.slug =
+        lastNumber === 0 ? `${baseSlug}-1` : `${baseSlug}-${lastNumber + 1}`;
+    }
+
+    this.setUpdate(update);
   }
   next();
 });
