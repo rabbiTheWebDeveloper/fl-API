@@ -1,21 +1,16 @@
 import { Router } from "express";
-import {
-  createProduct,
-  getAllProducts,
-  getProductByFilter,
-  getProductById,
-  productDelete,
-  updateProduct,
-} from "./product.controller";
+import { createProduct } from "./product.controller";
 import imageUpload from "../../middleware/imageUpload";
 
 const router: Router = Router();
-
-router.get("/allProducts", getAllProducts);
-router.get("/details/:id", getProductById);
-router.get("/product-filter/:sortBy", getProductByFilter);
-router.post("/addProducts", imageUpload.single("image"), createProduct);
-router.post("/product-update/:id", imageUpload.single("image"), updateProduct);
-router.get("/product-delete/:id", productDelete);
+router.post(
+  "/create",
+  imageUpload.fields([
+    { name: "mainImage", maxCount: 1 }, // Single main image
+    { name: "galleryImages", maxCount: 10 }, // Multiple gallery images
+    { name: "variantImages", maxCount: 50 }, // Variant images (handle mapping manually)
+  ]),
+  createProduct
+);
 
 export default router;

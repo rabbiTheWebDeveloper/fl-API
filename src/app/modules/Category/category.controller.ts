@@ -6,13 +6,9 @@ import {
   updateCategoryFromDB,
 } from "./category.service";
 import slugify from "slugify";
-import ImageKit from "imagekit";
+
 import { Categorys } from "./category.model";
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY as string,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY as string,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT as string,
-});
+import imagekit from "../../utlis/imagekit";
 
 export const addCategory = async (
   req: Request,

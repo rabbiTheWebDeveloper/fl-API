@@ -1,4 +1,4 @@
-import { Product } from "../modules/Product/product.model";
+import { ProductModel } from "../modules/Product/product.model";
 
 
 // Function to generate Arabic slugs
@@ -11,13 +11,13 @@ const generateArabicSlug = async (title :any) => {
 
   // Check if the slug already exists in the database
   let titleSlug = normalizedTitle;
-  let existingProduct = await Product.findOne({ titleSlug });
+  let existingProduct = await ProductModel.findOne({ titleSlug });
   let slugCounter = 1;
 
   while (existingProduct) {
     // Append counter to the slug and check again
     titleSlug = `${normalizedTitle}-${slugCounter}`;
-    existingProduct = await Product.findOne({ titleSlug });
+    existingProduct = await ProductModel.findOne({ titleSlug });
     slugCounter++;
   }
 

@@ -12,13 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateProduct = exports.productDelete = exports.createProduct = exports.getProductByFilter = exports.getProductById = exports.getAllProducts = void 0;
+exports.createProduct = void 0;
 const product_service_1 = require("./product.service");
 const responseHandler_1 = require("../../utlis/responseHandler");
-const cloudinary_1 = __importDefault(require("../../utlis/cloudinary"));
-const product_model_1 = require("./product.model");
 const slugify_1 = __importDefault(require("slugify"));
-const slugify_2 = __importDefault(require("../../utlis/slugify"));
+const imagekit_1 = __importDefault(require("../../utlis/imagekit"));
 slugify_1.default.extend({
     "٠": "0",
     "١": "1",
@@ -31,103 +29,84 @@ slugify_1.default.extend({
     "٨": "8",
     "٩": "9",
 });
-const getAllProducts = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const products = yield (0, product_service_1.getAllProductsFromDB)();
-    (0, responseHandler_1.sendApiResponse)(res, 200, true, products);
-});
-exports.getAllProducts = getAllProducts;
-const getProductById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
-    const product = yield (0, product_service_1.getProductByIdFromDB)(id);
-    (0, responseHandler_1.sendApiResponse)(res, 200, true, product);
-});
-exports.getProductById = getProductById;
-const getProductByFilter = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { sortBy } = req.params;
-    const product = yield (0, product_service_1.getFilterProduct)(sortBy);
-    (0, responseHandler_1.sendApiResponse)(res, 200, true, product);
-});
-exports.getProductByFilter = getProductByFilter;
 const createProduct = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { title, keywords, description, longDescription, youtubeLink } = req.body;
+    var _a, _b;
     try {
-        const result = yield cloudinary_1.default.uploader.upload(req.file.path);
-        const imageUrl = result.secure_url;
-        const titleSlug = yield (0, slugify_2.default)(title);
-        const newProduct = new product_model_1.Product({
-            title,
-            keywords,
-            titleSlug,
-            longDescription,
-            description,
-            youtubeLink,
-            image: imageUrl,
-        });
-        console.log(keywords);
-        const product = yield (0, product_service_1.createProductFromDB)(newProduct);
+        const files = req.files;
+        const { productName } = req.body;
+        let deliveryCharges = undefined;
+        if (req.body.deliveryCharges) {
+            try {
+                deliveryCharges = JSON.parse(req.body.deliveryCharges);
+            }
+            catch (err) {
+                console.error("Invalid deliveryCharges JSON:", err);
+                return (0, responseHandler_1.sendApiResponse)(res, 400, false, "Invalid deliveryCharges format");
+            }
+        }
+        // --- Upload mainImage ---
+        let mainImage = null;
+        if ((_a = files === null || files === void 0 ? void 0 : files.mainImage) === null || _a === void 0 ? void 0 : _a[0]) {
+            const file = files.mainImage[0];
+            const uploadResponse = yield imagekit_1.default.upload({
+                file: file.buffer,
+                fileName: `${(0, slugify_1.default)(productName || "product", {
+                    lower: true,
+                })}-${Date.now()}`,
+                folder: "/products/main",
+            });
+            mainImage = {
+                url: uploadResponse.url,
+                filename: uploadResponse.name,
+            };
+        }
+        // --- Upload galleryImages ---
+        let galleryImages = [];
+        if ((_b = files === null || files === void 0 ? void 0 : files.galleryImages) === null || _b === void 0 ? void 0 : _b.length) {
+            galleryImages = yield Promise.all(files.galleryImages.map((file) => __awaiter(void 0, void 0, void 0, function* () {
+                const uploadResponse = yield imagekit_1.default.upload({
+                    file: file.buffer,
+                    fileName: `${(0, slugify_1.default)(productName || "gallery", {
+                        lower: true,
+                    })}-${Date.now()}`,
+                    folder: "/products/gallery",
+                });
+                return {
+                    url: uploadResponse.url,
+                    filename: uploadResponse.name,
+                };
+            })));
+        }
+        // --- Upload variantImages ---
+        let variants = [];
+        if (req.body.variants) {
+            const variantData = JSON.parse(req.body.variants); // expects JSON string from frontend
+            const variantFiles = (files === null || files === void 0 ? void 0 : files.variantImages) || [];
+            variants = yield Promise.all(variantData.map((v, index) => __awaiter(void 0, void 0, void 0, function* () {
+                let image = null;
+                if (variantFiles[index]) {
+                    const uploadResponse = yield imagekit_1.default.upload({
+                        file: variantFiles[index].buffer,
+                        fileName: `${(0, slugify_1.default)(v.productCode || "variant", {
+                            lower: true,
+                        })}-${Date.now()}`,
+                        folder: "/products/variants",
+                    });
+                    image = { url: uploadResponse.url, filename: uploadResponse.name };
+                }
+                return Object.assign(Object.assign({}, v), { image });
+            })));
+        }
+        // --- Create product in DB ---
+        const product = yield (0, product_service_1.createProductFromDB)(Object.assign(Object.assign({}, req.body), { mainImage,
+            deliveryCharges,
+            galleryImages,
+            variants }));
         (0, responseHandler_1.sendApiResponse)(res, 200, true, product);
     }
     catch (error) {
         console.error("An error occurred:", error);
-        (0, responseHandler_1.sendApiResponse)(res, 500, false, "Internal Server Error");
+        (0, responseHandler_1.sendApiResponse)(res, 500, false, error.message || "Internal Server Error");
     }
 });
 exports.createProduct = createProduct;
-const productDelete = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
-    const result = yield (0, product_service_1.productdelete)(id);
-    (0, responseHandler_1.sendApiResponse)(res, 200, true, result);
-});
-exports.productDelete = productDelete;
-const updateProduct = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const { title, keywords, description, longDescription, youtubeLink } = req.body;
-    try {
-        const productId = req.params.id;
-        const existingProduct = yield product_model_1.Product.findById(productId);
-        if (!existingProduct) {
-            return (0, responseHandler_1.sendApiResponse)(res, 404, false, "Product not found");
-        }
-        let imageUrl = existingProduct.image;
-        if (req.file) {
-            const result = yield cloudinary_1.default.uploader.upload(req.file.path);
-            if (existingProduct.image) {
-                console.log(existingProduct.image);
-                const public_id = (_a = existingProduct.image.split("/").pop()) === null || _a === void 0 ? void 0 : _a.split(".")[0];
-                console.log(public_id);
-                yield cloudinary_1.default.uploader.destroy(public_id);
-            }
-            imageUrl = result.secure_url;
-        }
-        let titleSlug = existingProduct.titleSlug;
-        // Check if the title has changed and generate a new slug if necessary
-        if (title && title !== existingProduct.title) {
-            titleSlug = yield (0, slugify_2.default)(title);
-        }
-        const newProduct = new product_model_1.Product({
-            title,
-            keywords,
-            titleSlug,
-            longDescription,
-            description,
-            youtubeLink,
-            image: imageUrl,
-        });
-        const updateProduct = {
-            title: newProduct.title,
-            keywords: newProduct.keywords,
-            titleSlug: newProduct.titleSlug,
-            longDescription: newProduct.longDescription,
-            description: newProduct.description,
-            youtubeLink: newProduct.youtubeLink,
-            image: newProduct.image,
-        };
-        const product = yield (0, product_service_1.updateProductFromDB)(productId, updateProduct);
-        (0, responseHandler_1.sendApiResponse)(res, 200, true, product);
-    }
-    catch (error) {
-        console.error("An error occurred:", error);
-        (0, responseHandler_1.sendApiResponse)(res, 500, false, "Internal Server Error");
-    }
-});
-exports.updateProduct = updateProduct;

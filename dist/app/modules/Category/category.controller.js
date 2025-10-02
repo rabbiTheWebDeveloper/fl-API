@@ -16,13 +16,8 @@ exports.updateCategory = exports.deleteCategory = exports.addCategory = void 0;
 const responseHandler_1 = require("../../utlis/responseHandler");
 const category_service_1 = require("./category.service");
 const slugify_1 = __importDefault(require("slugify"));
-const imagekit_1 = __importDefault(require("imagekit"));
 const category_model_1 = require("./category.model");
-const imagekit = new imagekit_1.default({
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-    privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
+const imagekit_1 = __importDefault(require("../../utlis/imagekit"));
 const addCategory = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name } = req.body;
@@ -34,7 +29,7 @@ const addCategory = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         let imageUrl = "";
         let imageFileId = "";
         if (req.file) {
-            const uploadResponse = yield imagekit.upload({
+            const uploadResponse = yield imagekit_1.default.upload({
                 file: req.file.buffer.toString("base64"),
                 fileName: `${(0, slugify_1.default)(name || "category", {
                     lower: true,
@@ -65,7 +60,7 @@ const deleteCategory = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         // delete image if exists
         if (category.imageFileId) {
             const imageFileId = category.imageFileId;
-            yield imagekit.deleteFile(imageFileId);
+            yield imagekit_1.default.deleteFile(imageFileId);
         }
         console.log("Category found: ", category);
         yield (0, category_service_1.categorydeleteService)(req.params.id);
@@ -92,10 +87,10 @@ const updateCategory = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         if (req.file) {
             // delete old image if exists
             if (category.imageFileId) {
-                yield imagekit.deleteFile(category.imageFileId);
+                yield imagekit_1.default.deleteFile(category.imageFileId);
             }
             // upload new image
-            const uploadResponse = yield imagekit.upload({
+            const uploadResponse = yield imagekit_1.default.upload({
                 file: req.file.buffer.toString("base64"),
                 fileName: `${(0, slugify_1.default)(req.body.name || category.name || "category", {
                     lower: true,

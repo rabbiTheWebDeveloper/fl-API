@@ -1,20 +1,17 @@
 import { NextFunction, Request, Response } from "express";
 import {
   createProductFromDB,
-  getAllProductsFromDB,
-  getFilterProduct,
-  getProductByIdFromDB,
   productdelete,
   updateProductFromDB,
 } from "./product.service";
 import { sendApiResponse } from "../../utlis/responseHandler";
 import cloudinary from "../../utlis/cloudinary";
 import { IProduct } from "./product.interface";
-import { Product } from "./product.model";
-import { Types } from "mongoose";
-import { validationResult } from "express-validator";
+
 import slugify from "slugify";
 import generateArabicSlug from "../../utlis/slugify";
+import { ProductModel } from "./product.model";
+import imagekit from "../../utlis/imagekit";
 slugify.extend({
   "٠": "0",
   "١": "1",
@@ -28,130 +25,103 @@ slugify.extend({
   "٩": "9",
 });
 
-export const getAllProducts = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const products = await getAllProductsFromDB();
-  sendApiResponse(res, 200, true, products);
-};
-
-export const getProductById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { id } = req.params;
-  const product = await getProductByIdFromDB(id);
-  sendApiResponse(res, 200, true, product);
-};
-export const getProductByFilter = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { sortBy } = req.params as { sortBy: string };
-  const product = await getFilterProduct(sortBy);
-  sendApiResponse(res, 200, true, product);
-};
-
 export const createProduct = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const { title,keywords, description, longDescription, youtubeLink } = req.body;
-
   try {
-    const result = await cloudinary.uploader.upload(
-      (req.file as Express.Multer.File).path
-    );
-    const imageUrl = result.secure_url;
-    const titleSlug = await generateArabicSlug(title);
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const { productName } = req.body;
 
-    const newProduct: IProduct = new Product({
-      title,
-      keywords,
-      titleSlug,
-      longDescription,
-      description,
-      youtubeLink,
-      image: imageUrl,
-    });
-    console.log(keywords)
-    const product = await createProductFromDB(newProduct);
-    sendApiResponse(res, 200, true, product);
-  } catch (error) {
-    console.error("An error occurred:", error);
-    sendApiResponse(res, 500, false, "Internal Server Error");
-  }
-};
-
-export const productDelete = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { id } = req.params;
-  const result = await productdelete(id);
-  sendApiResponse(res, 200, true, result);
-};
-
-export const updateProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { title,keywords, description, longDescription, youtubeLink } = req.body;
-  try {
-    const productId = req.params.id;
-    const existingProduct: any = await Product.findById(productId);
-    if (!existingProduct) {
-      return sendApiResponse(res, 404, false, "Product not found");
-    }
-    let imageUrl: any = existingProduct.image;
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(
-        (req.file as Express.Multer.File).path
-      );
-
-      if (existingProduct.image) {
-        console.log(existingProduct.image);
-        const public_id = existingProduct.image.split("/").pop()?.split(".")[0];
-        console.log(public_id);
-        await cloudinary.uploader.destroy(public_id);
+    let deliveryCharges = undefined;
+    if (req.body.deliveryCharges) {
+      try {
+        deliveryCharges = JSON.parse(req.body.deliveryCharges);
+      } catch (err) {
+        console.error("Invalid deliveryCharges JSON:", err);
+        return sendApiResponse(
+          res,
+          400,
+          false,
+          "Invalid deliveryCharges format"
+        );
       }
-      imageUrl = result.secure_url;
     }
-    let titleSlug = existingProduct.titleSlug;
 
-    // Check if the title has changed and generate a new slug if necessary
-    if (title && title !== existingProduct.title) {
-      titleSlug = await generateArabicSlug(title);
+    // --- Upload mainImage ---
+    let mainImage = null;
+    if (files?.mainImage?.[0]) {
+      const file = files.mainImage[0];
+      const uploadResponse = await imagekit.upload({
+        file: file.buffer,
+        fileName: `${slugify(productName || "product", {
+          lower: true,
+        })}-${Date.now()}`,
+        folder: "/products/main",
+      });
+      mainImage = {
+        url: uploadResponse.url,
+        filename: uploadResponse.name,
+      };
     }
-    const newProduct: IProduct = new Product({
-      title,
-      keywords,
-      titleSlug,
-      longDescription,
-      description,
-      youtubeLink,
-      image: imageUrl,
+
+    // --- Upload galleryImages ---
+    let galleryImages: { url: string; filename: string }[] = [];
+    if (files?.galleryImages?.length) {
+      galleryImages = await Promise.all(
+        files.galleryImages.map(async (file) => {
+          const uploadResponse = await imagekit.upload({
+            file: file.buffer,
+            fileName: `${slugify(productName || "gallery", {
+              lower: true,
+            })}-${Date.now()}`,
+            folder: "/products/gallery",
+          });
+          return {
+            url: uploadResponse.url,
+            filename: uploadResponse.name,
+          };
+        })
+      );
+    }
+
+    // --- Upload variantImages ---
+    let variants: any[] = [];
+    if (req.body.variants) {
+      const variantData = JSON.parse(req.body.variants); // expects JSON string from frontend
+      const variantFiles = files?.variantImages || [];
+
+      variants = await Promise.all(
+        variantData.map(async (v: any, index: number) => {
+          let image = null;
+          if (variantFiles[index]) {
+            const uploadResponse = await imagekit.upload({
+              file: variantFiles[index].buffer,
+              fileName: `${slugify(v.productCode || "variant", {
+                lower: true,
+              })}-${Date.now()}`,
+              folder: "/products/variants",
+            });
+            image = { url: uploadResponse.url, filename: uploadResponse.name };
+          }
+          return { ...v, image };
+        })
+      );
+    }
+
+    // --- Create product in DB ---
+    const product = await createProductFromDB({
+      ...req.body,
+      mainImage,
+      deliveryCharges,
+      galleryImages,
+      variants,
     });
-    const updateProduct: any = {
-      title: newProduct.title,
-      keywords: newProduct.keywords,
-      titleSlug: newProduct.titleSlug,
-      longDescription: newProduct.longDescription,
-      description: newProduct.description,
-      youtubeLink: newProduct.youtubeLink,
-      image: newProduct.image,
-    };
-    const product = await updateProductFromDB(productId, updateProduct);
+
     sendApiResponse(res, 200, true, product);
-  } catch (error) {
+  } catch (error: any) {
     console.error("An error occurred:", error);
-    sendApiResponse(res, 500, false, "Internal Server Error");
+    sendApiResponse(res, 500, false, error.message || "Internal Server Error");
   }
 };

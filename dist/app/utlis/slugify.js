@@ -19,12 +19,12 @@ const generateArabicSlug = (title) => __awaiter(void 0, void 0, void 0, function
         .toLowerCase(); // Convert to lowercase
     // Check if the slug already exists in the database
     let titleSlug = normalizedTitle;
-    let existingProduct = yield product_model_1.Product.findOne({ titleSlug });
+    let existingProduct = yield product_model_1.ProductModel.findOne({ titleSlug });
     let slugCounter = 1;
     while (existingProduct) {
         // Append counter to the slug and check again
         titleSlug = `${normalizedTitle}-${slugCounter}`;
-        existingProduct = yield product_model_1.Product.findOne({ titleSlug });
+        existingProduct = yield product_model_1.ProductModel.findOne({ titleSlug });
         slugCounter++;
     }
     return titleSlug;
