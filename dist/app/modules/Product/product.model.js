@@ -77,7 +77,7 @@ const productSchema = new mongoose_1.default.Schema({
     productCode: {
         type: String,
         required: [true, "Product code is required"],
-        unique: true,
+        // unique: true,
         trim: true,
     },
     shopId: {
