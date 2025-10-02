@@ -26,10 +26,11 @@ const createCategoryFromDB = (data) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.createCategoryFromDB = createCategoryFromDB;
 const updateCategoryFromDB = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Updating category with ID:", id, "and data:", data);
     let result = yield category_model_1.Categorys.updateOne({ _id: id }, data);
-    console.log("Update result:", result);
-    return result;
+    return {
+        data: result,
+        message: "Category updated successfully"
+    };
 });
 exports.updateCategoryFromDB = updateCategoryFromDB;
 const categorydeleteService = (id) => __awaiter(void 0, void 0, void 0, function* () {

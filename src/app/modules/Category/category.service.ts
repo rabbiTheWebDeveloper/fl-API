@@ -10,7 +10,6 @@ export const getCategoryByIdDB = async (id: any): Promise<ICategory[]> => {
 };
 
 export const createCategoryFromDB = async (data: any): Promise<ICategory> => {
-  
   const user = new Categorys(data);
   await user.save();
   return user;
@@ -20,10 +19,12 @@ export const updateCategoryFromDB = async (
   id: any,
   data: any
 ): Promise<any> => {
-  console.log("Updating category with ID:", id, "and data:", data);
   let result = await Categorys.updateOne({ _id: id }, data);
-  console.log("Update result:", result);
-  return result;
+
+  return {
+    data : result,
+    message : "Category updated successfully"
+  };
 };
 
 export const categorydeleteService = async (

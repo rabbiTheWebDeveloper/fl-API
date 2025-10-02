@@ -80,7 +80,6 @@ const deleteCategory = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
 exports.deleteCategory = deleteCategory;
 const updateCategory = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("Update category called", req.params.id);
         const category = yield category_model_1.Categorys.findById(req.params.id);
         if (!category) {
             return res

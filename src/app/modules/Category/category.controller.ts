@@ -93,7 +93,6 @@ export const updateCategory = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Update category called", req.params.id);
     const category = await Categorys.findById(req.params.id);
 
     if (!category) {
