@@ -38,17 +38,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Categorys = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const slugify_1 = __importDefault(require("slugify"));
+const escapeRegex = (string) => string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 const categorysSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
     },
     shopId: {
-        type: String,
-        required: true,
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Shop",
     },
     userId: {
-        type: String,
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
     },
     slug: {
         type: String,
@@ -75,24 +77,27 @@ const categorysSchema = new mongoose_1.Schema({
     timestamps: true,
     versionKey: false,
 });
+categorysSchema.index({ shopId: 1, name: 1 }, { unique: true });
 categorysSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (this.isModified("name")) {
-            const baseSlug = (0, slugify_1.default)(this.name, { lower: true, strict: true });
-            // Find the slug with the highest number for this baseSlug
-            const regex = new RegExp(`^${baseSlug}(-[0-9]+)?$`, "i");
-            const lastSlug = yield mongoose_1.default.models.Category.findOne({ slug: regex })
-                .sort({ slug: -1 }) // get the "last" one
-                .select("slug");
-            if (!lastSlug) {
-                this.slug = baseSlug;
-            }
-            else {
-                const match = lastSlug.slug.match(/-(\d+)$/);
-                const lastNumber = match ? parseInt(match[1], 10) : 0;
-                this.slug =
-                    lastNumber === 0 ? `${baseSlug}-1` : `${baseSlug}-${lastNumber + 1}`;
-            }
+        if (!this.isModified("name"))
+            return next();
+        const baseSlug = (0, slugify_1.default)(this.name, { lower: true, strict: true });
+        const escapedSlug = escapeRegex(baseSlug);
+        // Find all slugs that start with baseSlug
+        const regex = new RegExp(`^${escapedSlug}(-[0-9]+)?$`, "i");
+        const existingSlugs = yield mongoose_1.default.models.Category.find({ slug: regex }).select("slug");
+        if (existingSlugs.length === 0) {
+            this.slug = baseSlug;
+        }
+        else {
+            // Find the max number suffix
+            const numbers = existingSlugs.map(cat => {
+                const match = cat.slug.match(/-(\d+)$/);
+                return match ? parseInt(match[1], 10) : 0;
+            });
+            const maxNumber = Math.max(...numbers);
+            this.slug = maxNumber === 0 ? `${baseSlug}-1` : `${baseSlug}-${maxNumber + 1}`;
         }
         next();
     });
