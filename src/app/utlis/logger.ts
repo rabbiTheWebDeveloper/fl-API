@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import pino from "pino";
-import PinoPretty from "pino-pretty";
+
 
 const log = pino({
   transport: {
@@ -9,7 +9,6 @@ const log = pino({
       colorize: true,
     },
   },
-  prettifier: PinoPretty,
   timestamp: () => `,"time":"${dayjs().format()}"`,
 });
 

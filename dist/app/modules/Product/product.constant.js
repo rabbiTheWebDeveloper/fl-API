@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sortingOptions = void 0;
 exports.sortingOptions = {
-    '': '_id',
+    '': '_id', // Default sorting by _id
     'feature': 'rating',
     'best-selling': '-rating',
     'a-z': 'name',
