@@ -6,14 +6,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.log = void 0;
 const dayjs_1 = __importDefault(require("dayjs"));
 const pino_1 = __importDefault(require("pino"));
-const log = (0, pino_1.default)({
-    transport: {
-        target: "pino-pretty",
-        options: {
-            colorize: true,
-            translateTime: "yyyy-mm-dd HH:MM:ss",
+const isDev = process.env.NODE_ENV !== "production";
+const log = isDev
+    ? (0, pino_1.default)({
+        transport: {
+            target: "pino-pretty",
+            options: {
+                colorize: true,
+                translateTime: "yyyy-mm-dd HH:MM:ss",
+            },
         },
-    },
-    timestamp: () => `,"time":"${(0, dayjs_1.default)().format()}"`,
-});
+        timestamp: () => `,"time":"${(0, dayjs_1.default)().format()}"`,
+    })
+    : (0, pino_1.default)({
+        timestamp: () => `,"time":"${(0, dayjs_1.default)().format()}"`,
+    });
 exports.log = log;
