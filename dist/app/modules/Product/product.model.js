@@ -38,12 +38,12 @@ const mongoose_1 = __importStar(require("mongoose"));
 const variantSchema = new mongoose_1.default.Schema({
     combination: {
         type: String,
-        required: true,
+        // required: true,
     },
     values: {
         type: Map,
         of: String,
-        required: true,
+        // required: true,
     },
     image: {
         url: String,
@@ -55,7 +55,7 @@ const variantSchema = new mongoose_1.default.Schema({
     },
     productCode: {
         type: String,
-        required: true,
+        // required: true,
     },
     quantity: {
         type: Number,

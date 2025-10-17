@@ -5,12 +5,12 @@ const variantSchema = new mongoose.Schema(
   {
     combination: {
       type: String,
-      required: true,
+      // required: true,
     },
     values: {
       type: Map,
       of: String,
-      required: true,
+      // required: true,
     },
     image: {
       url: String,
@@ -22,7 +22,7 @@ const variantSchema = new mongoose.Schema(
     },
     productCode: {
       type: String,
-      required: true,
+      // required: true,
     },
     quantity: {
       type: Number,
