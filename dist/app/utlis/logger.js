@@ -11,6 +11,7 @@ const log = (0, pino_1.default)({
         target: "pino-pretty",
         options: {
             colorize: true,
+            translateTime: "yyyy-mm-dd HH:MM:ss",
         },
     },
     timestamp: () => `,"time":"${(0, dayjs_1.default)().format()}"`,
