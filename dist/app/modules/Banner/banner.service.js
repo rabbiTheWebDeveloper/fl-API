@@ -12,39 +12,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bannerdelete = exports.createBannerFromDB = exports.getAllBannerFromDB = void 0;
-const cloudinary_1 = __importDefault(require("../../utlis/cloudinary"));
+exports.updateBannerImages = exports.deleteBannerImage = exports.uploadBannerImage = exports.findBannerByUserAndShop = exports.createBannerFromDB = void 0;
+const imagekit_1 = __importDefault(require("../../utlis/imagekit"));
 const banner_model_1 = require("./banner.model");
-const getAllBannerFromDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    return banner_model_1.Banner.find().sort({ createdAt: -1, });
-});
-exports.getAllBannerFromDB = getAllBannerFromDB;
+// Create new banner
 const createBannerFromDB = (data) => __awaiter(void 0, void 0, void 0, function* () {
     yield data.save();
     return data;
 });
 exports.createBannerFromDB = createBannerFromDB;
-const bannerdelete = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+// Find banner by user + shop
+const findBannerByUserAndShop = (userId, shopId) => __awaiter(void 0, void 0, void 0, function* () {
+    return yield banner_model_1.Banner.findOne({ userId, shopId });
+});
+exports.findBannerByUserAndShop = findBannerByUserAndShop;
+// Upload image to ImageKit
+const uploadBannerImage = (file) => __awaiter(void 0, void 0, void 0, function* () {
+    const uploadResponse = yield imagekit_1.default.upload({
+        file: file.buffer,
+        fileName: `banner-${Date.now()}`,
+        folder: "/banners/main",
+    });
+    return {
+        url: uploadResponse.url,
+        filename: uploadResponse.fileId,
+    };
+});
+exports.uploadBannerImage = uploadBannerImage;
+// Delete image from ImageKit
+const deleteBannerImage = (filename) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const existingBanner = yield banner_model_1.Banner.findById(id);
-        if (!existingBanner) {
-            throw new Error(`Banner with id ${id} not found`);
-        }
-        if (existingBanner.image) {
-            const publicId = (_a = existingBanner.image.split('/').pop()) === null || _a === void 0 ? void 0 : _a.split('.')[0];
-            if (publicId) {
-                yield cloudinary_1.default.uploader.destroy(publicId);
-            }
-            else {
-                console.warn(`Failed to extract publicId from image URL: ${existingBanner.image}`);
-            }
-        }
-        return yield banner_model_1.Banner.deleteOne({ _id: id });
+        yield imagekit_1.default.deleteFile(filename);
     }
-    catch (error) {
-        console.error(`Failed to delete banner with id ${id}:`, error);
-        throw error;
+    catch (err) {
+        console.log("Image delete failed:", err.message);
     }
 });
-exports.bannerdelete = bannerdelete;
+exports.deleteBannerImage = deleteBannerImage;
+// Update existing banner (images, url, etc.)
+const updateBannerImages = (banner, newImage, url) => __awaiter(void 0, void 0, void 0, function* () {
+    let images = banner.images || [];
+    if (newImage) {
+        images.push(newImage);
+    }
+    // keep only latest 3 images
+    if (images.length > 3) {
+        const removedImages = images.slice(0, images.length - 3);
+        // delete old images from ImageKit
+        for (const img of removedImages) {
+            yield (0, exports.deleteBannerImage)(img.filename);
+        }
+        // keep latest 3
+        images = images.slice(-3);
+    }
+    banner.images = images;
+    banner.url = url || banner.url;
+    yield banner.save();
+    return banner;
+});
+exports.updateBannerImages = updateBannerImages;

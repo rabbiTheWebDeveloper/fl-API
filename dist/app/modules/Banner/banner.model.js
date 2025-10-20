@@ -36,14 +36,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Banner = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const bannerSchema = new mongoose_1.Schema({
-    name: {
+    url: {
         type: String,
     },
-    image: {
-        type: String,
+    shopId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Shop",
     },
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
+    },
+    images: [
+        {
+            url: String,
+            filename: String,
+        },
+    ],
 }, {
     timestamps: true,
-    versionKey: false
+    versionKey: false,
 });
 exports.Banner = mongoose_1.default.model("Banner", bannerSchema);

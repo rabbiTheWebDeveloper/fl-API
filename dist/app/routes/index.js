@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const category_router_1 = __importDefault(require("../modules/Category/category.router"));
+const banner_router_1 = __importDefault(require("../modules/Banner/banner.router"));
 const product_router_1 = __importDefault(require("../modules/Product/product.router"));
 const router = express_1.default.Router();
 const moduleRoutes = [
@@ -15,6 +16,10 @@ const moduleRoutes = [
     {
         path: "/category",
         route: category_router_1.default,
+    },
+    {
+        path: "/banner",
+        route: banner_router_1.default,
     },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

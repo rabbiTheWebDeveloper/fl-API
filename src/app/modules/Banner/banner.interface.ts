@@ -1,5 +1,8 @@
+import { Types } from "mongoose";
+
 export interface IBanner extends Document {
-    name: string;
-    image: string;
-    
-  }
+  url?: string;
+  shopId: Types.ObjectId;
+  userId: Types.ObjectId;
+  image: string;
+}
