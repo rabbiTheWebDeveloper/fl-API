@@ -1,6 +1,7 @@
 import express from "express";
 import categorysRoute from "../modules/Category/category.router";
 import bannersRoute from "../modules/Banner/banner.router";
+import sliderRoute from "../modules/slider/slider.router";
 import productRoute from "../modules/Product/product.router";
 const router = express.Router();
 
@@ -16,6 +17,10 @@ const moduleRoutes = [
   {
     path: "/banner",
     route: bannersRoute,
+  },
+  {
+    path: "/slider",
+    route: sliderRoute,
   },
 ];
 
