@@ -38,7 +38,7 @@ const createProductFromDB = (data) => __awaiter(void 0, void 0, void 0, function
 exports.createProductFromDB = createProductFromDB;
 const updateProductFromDB = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield product_model_1.ProductModel.updateOne({ _id: id }, { $set: data }, { new: true });
+        const result = yield product_model_1.ProductModel.updateOne({ _id: id }, { $set: data });
         if (result.modifiedCount === 0) {
             throw new Error("Product not found or not modified");
         }

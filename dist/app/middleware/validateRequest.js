@@ -17,7 +17,7 @@ const validateRequest = (schema) => (req, res, next) => __awaiter(void 0, void 0
             params: req.params,
             cookies: req.cookies,
         });
-        return next();
+        next();
     }
     catch (error) {
         next(error);

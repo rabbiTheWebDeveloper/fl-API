@@ -36,7 +36,7 @@ const blogdelete = (id) => __awaiter(void 0, void 0, void 0, function* () {
 exports.blogdelete = blogdelete;
 const updateBlogFromDB = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield blog_model_1.Blogs.updateOne({ _id: id }, { $set: data }, { new: true });
+        const result = yield blog_model_1.Blogs.updateOne({ _id: id }, { $set: data });
         if (result.modifiedCount === 0) {
             throw new Error("Blogs not found or not modified");
         }

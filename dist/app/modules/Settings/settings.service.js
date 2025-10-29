@@ -24,7 +24,7 @@ const createSettingFromDB = (data) => __awaiter(void 0, void 0, void 0, function
 exports.createSettingFromDB = createSettingFromDB;
 const updateSettingFromDB = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield settings_model_1.Setting.updateOne({ _id: id }, { $set: data }, { new: true });
+        const result = yield settings_model_1.Setting.updateOne({ _id: id }, { $set: data });
         if (result.modifiedCount === 0) {
             throw new Error("Product not found or not modified");
         }
