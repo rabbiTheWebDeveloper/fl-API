@@ -26,7 +26,7 @@ export const createBlogFromDB = async ( data:any): Promise<IBlog> => {
 
   export const updateBlogFromDB = async (id: any, data: any): Promise<any> => {
     try {
-      const result = await Blogs.updateOne({ _id: id }, { $set: data }, { new: true });
+      const result = await Blogs.updateOne({ _id: id }, { $set: data });
       if (result.modifiedCount === 0) {
         throw new Error("Blogs not found or not modified");
       }

@@ -31,7 +31,7 @@ export const updateProductFromDB = async (id: any, data: any): Promise<any> => {
     const result = await ProductModel.updateOne(
       { _id: id },
       { $set: data },
-      { new: true }
+   
     );
     if (result.modifiedCount === 0) {
       throw new Error("Product not found or not modified");

@@ -16,7 +16,7 @@ export const createSettingFromDB = async ( data:any): Promise<ISettings> => {
 
   export const updateSettingFromDB = async (id: any, data: any): Promise<any> => {
     try {
-      const result = await Setting.updateOne({ _id: id }, { $set: data }, { new: true });
+      const result = await Setting.updateOne({ _id: id }, { $set: data });
       if (result.modifiedCount === 0) {
         throw new Error("Product not found or not modified");
       }
