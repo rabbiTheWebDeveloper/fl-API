@@ -16,25 +16,49 @@ import router from "./app/routes";
 const app: Application = express();
 app.use(cors());
 
-// parse data
+// Parse incoming data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Security middlewares
 app.use(helmet());
-app.use(mongoSanitize());
+
+// ✅ Custom Express 5 safe sanitizer
+app.use((req, res, next) => {
+  try {
+    if (req.body) mongoSanitize.sanitize(req.body);
+    if (req.params) mongoSanitize.sanitize(req.params);
+    if (req.query) mongoSanitize.sanitize(req.query);
+  } catch (err) {
+    console.error("Sanitize error:", err);
+  }
+  next();
+});
+
 app.use(hpp());
 app.use(bodyParser.json());
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 3000 });
+
+// Rate limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3000,
+});
 app.use(limiter);
 
-// db connection
+// DB connection
 dbConnection();
+
+// Routes
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
+
 app.use("/api/v1", bannerRoute);
 app.use("/api/v1", blogRoute);
 app.use("/api/v1", settingRoute);
 app.use("/api/v1", router);
+
+// Global error handler
 app.use(globalErrorHandler);
 
 export default app;

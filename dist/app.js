@@ -19,17 +19,37 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const routes_1 = __importDefault(require("./app/routes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
-// parse data
+// Parse incoming data
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+// Security middlewares
 app.use((0, helmet_1.default)());
-app.use((0, express_mongo_sanitize_1.default)());
+// ✅ Custom Express 5 safe sanitizer
+app.use((req, res, next) => {
+    try {
+        if (req.body)
+            express_mongo_sanitize_1.default.sanitize(req.body);
+        if (req.params)
+            express_mongo_sanitize_1.default.sanitize(req.params);
+        if (req.query)
+            express_mongo_sanitize_1.default.sanitize(req.query);
+    }
+    catch (err) {
+        console.error("Sanitize error:", err);
+    }
+    next();
+});
 app.use((0, hpp_1.default)());
 app.use(body_parser_1.default.json());
-const limiter = (0, express_rate_limit_1.default)({ windowMs: 15 * 60 * 1000, max: 3000 });
+// Rate limiter
+const limiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 3000,
+});
 app.use(limiter);
-// db connection
+// DB connection
 (0, dbConnection_1.dbConnection)();
+// Routes
 app.get("/", (req, res) => {
     res.send("Hello World");
 });
@@ -37,5 +57,6 @@ app.use("/api/v1", banner_router_1.default);
 app.use("/api/v1", blog_router_1.default);
 app.use("/api/v1", settings_router_1.default);
 app.use("/api/v1", routes_1.default);
+// Global error handler
 app.use(globalErrorHandler_1.default);
 exports.default = app;
