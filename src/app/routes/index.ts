@@ -3,6 +3,7 @@ import categorysRoute from "../modules/Category/category.router";
 import bannersRoute from "../modules/Banner/banner.router";
 import sliderRoute from "../modules/slider/slider.router";
 import productRoute from "../modules/Product/product.router";
+import shopInfoRoute from "../modules/ShopInfo/shopInfo.router";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -21,6 +22,10 @@ const moduleRoutes = [
   {
     path: "/slider",
     route: sliderRoute,
+  },
+  {
+    path: "/clients",
+    route: shopInfoRoute,
   },
 ];
 

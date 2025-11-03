@@ -8,6 +8,7 @@ const category_router_1 = __importDefault(require("../modules/Category/category.
 const banner_router_1 = __importDefault(require("../modules/Banner/banner.router"));
 const slider_router_1 = __importDefault(require("../modules/slider/slider.router"));
 const product_router_1 = __importDefault(require("../modules/Product/product.router"));
+const shopInfo_router_1 = __importDefault(require("../modules/ShopInfo/shopInfo.router"));
 const router = express_1.default.Router();
 const moduleRoutes = [
     {
@@ -25,6 +26,10 @@ const moduleRoutes = [
     {
         path: "/slider",
         route: slider_router_1.default,
+    },
+    {
+        path: "/clients",
+        route: shopInfo_router_1.default,
     },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
