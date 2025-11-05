@@ -20,10 +20,6 @@ const categorysSchema = new Schema<ICategory>(
       type: String,
       unique: true,
     },
-    description: {
-      type: String,
-      default: "",
-    },
     image: {
       type: String,
       default: "",

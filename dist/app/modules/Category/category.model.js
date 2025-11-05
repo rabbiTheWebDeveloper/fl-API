@@ -66,10 +66,6 @@ const categorysSchema = new mongoose_1.Schema({
         type: String,
         unique: true,
     },
-    description: {
-        type: String,
-        default: "",
-    },
     image: {
         type: String,
         default: "",
