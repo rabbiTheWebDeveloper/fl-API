@@ -216,7 +216,7 @@ productSchema.pre("updateOne", async function (next) {
 
   // Calculate discounted price
   let discountedPrice = regularPrice;
-  if (discountType === "percent") {
+  if (discountType === "percentage") {
     discountedPrice = regularPrice - (regularPrice * discountValue) / 100;
   } else if (discountType === "fixed") {
     discountedPrice = regularPrice - discountValue;

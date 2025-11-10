@@ -240,7 +240,7 @@ productSchema.pre("updateOne", function (next) {
         const discountValue = (_c = update.$set.discountValue) !== null && _c !== void 0 ? _c : doc.discountValue;
         // Calculate discounted price
         let discountedPrice = regularPrice;
-        if (discountType === "percent") {
+        if (discountType === "percentage") {
             discountedPrice = regularPrice - (regularPrice * discountValue) / 100;
         }
         else if (discountType === "fixed") {
