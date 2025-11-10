@@ -1,169 +1,69 @@
+import mongoose, { Schema, Document, UpdateQuery } from "mongoose";
 import { IProduct, IProductModel } from "./product.interface";
-import mongoose, {Schema, UpdateQuery, Document} from "mongoose";
 
-const variantSchema = new mongoose.Schema(
+// Variant Schema
+const variantSchema = new Schema(
   {
-    combination: {
-      type: String,
-      // required: true,
-    },
-    values: {
-      type: Map,
-      of: String,
-      // required: true,
-    },
-    image: {
-      url: String,
-      filename: String,
-    },
-    price: {
-      type: Number,
-      default: 0,
-    },
-    productCode: {
-      type: String,
-      // required: true,
-    },
-    quantity: {
-      type: Number,
-      default: 0,
-    },
+    combination: { type: String, required: true },
+    values: { type: Map, of: String, required: true },
+    image: { url: String, filename: String },
+    price: { type: Number, default: 0 },
+    productCode: { type: String, required: true },
+    quantity: { type: Number, default: 0, min: 0 },
     description: String,
   },
   { _id: true }
 );
 
-const deliveryChargesSchema = new mongoose.Schema({
-  dhaka: {
-    type: Number,
-    default: 0,
-  },
-  outsideDhaka: {
-    type: Number,
-    default: 0,
-  },
-  subarea: {
-    type: Number,
-    default: 0,
-  },
+// Delivery Charges
+const deliveryChargesSchema = new Schema({
+  dhaka: { type: Number, default: 60 },
+  outsideDhaka: { type: Number, default: 120 },
+  subarea: { type: Number, default: 0 },
 });
 
-const productSchema = new mongoose.Schema(
+// Main Product Schema
+const productSchema = new Schema(
   {
-    // Basic Information
-    productName: {
-      type: String,
-      required: [true, "Product name is required"],
-      trim: true,
-    },
-    productCode: {
-      type: String,
-      required: [true, "Product code is required"],
-      // unique: true,
-      trim: true,
-    },
-    shopId: {
-      type: Schema.Types.ObjectId,
-      ref: "Shop",
-    },
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-    categoryId: {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
-    },
-    availableQuantity: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    shortDescription: {
-      type: String,
-      trim: true,
-    },
-    longDescription: {
-      type: String,
-      trim: true,
-    },
+    productName: { type: String, required: true, trim: true },
+    productCode: { type: String, required: true, unique: true, trim: true },
 
-    // Pricing Information
-    regularPrice: {
-      type: Number,
-      required: [true, "Regular price is required"],
-      min: 0,
-    },
-    discountType: {
-      type: String,
-      enum: ["percentage", "fixed"],
-      default: "percentage",
-    },
-    discountValue: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    discountedPrice: {
-      type: Number,
-      min: 0,
-    },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", index: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    categoryId: { type: Schema.Types.ObjectId, ref: "Category", index: true },
 
-    // Delivery Settings
-    deliveryCharge: {
-      type: String,
-      enum: ["free", "paid"],
-      default: "free",
-    },
+    availableQuantity: { type: Number, default: 0, min: 0 },
+    shortDescription: { type: String, trim: true },
+    longDescription: { type: String, trim: true },
+
+    // Pricing
+    regularPrice: { type: Number, required: true, min: 0 },
+    discountType: { type: String, enum: ["percentage", "fixed"], default: "percentage" },
+    discountValue: { type: Number, default: 0, min: 0 },
+    discountedPrice: { type: Number, min: 0 },
+
+    // Delivery
+    deliveryCharge: { type: String, enum: ["free", "paid"], default: "free" },
     deliveryCharges: deliveryChargesSchema,
 
     // Media
-    mainImage: {
-      url: String,
-      filename: String,
-    },
-    galleryImages: [
-      {
-        url: String,
-        filename: String,
-        position: Number,
-      },
-    ],
+    mainImage: { url: String, filename: String },
+    galleryImages: [{ url: String, filename: String, position: Number }],
 
-    // Variants System
+    // Variants
     variants: [variantSchema],
     variantConfig: {
-      variantType1: {
-        type: String,
-        enum: ["size", "color", "material", ""],
-        default: "",
-      },
-      variantType2: {
-        type: String,
-        enum: ["size", "color", "material", "none", ""],
-        default: "",
-      },
+      variantType1: { type: String, enum: ["size", "color", "material", ""], default: "" },
+      variantType2: { type: String, enum: ["size", "color", "material", "none", ""], default: "" },
       selectedOptions1: [String],
       selectedOptions2: [String],
     },
 
     // SEO & Status
-    metaTitle: {
-      type: String,
-      trim: true,
-    },
-    metaDescription: {
-      type: String,
-      trim: true,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
+    metaTitle: String,
+    metaDescription: String,
+    isActive: { type: Boolean, default: true, index: true },
+    isFeatured: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -173,81 +73,68 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-function calculateDiscountedPrice(regularPrice: number, discountType: "percentage" | "fixed", discountValue: number): number {
-  if (discountType === "percentage") return regularPrice - (regularPrice * discountValue) / 100;
-  return regularPrice - discountValue;
-}
+// === Virtual: Total Stock ===
+productSchema.virtual("totalStock").get(function (this: any) {
+  return this.variants.length > 0
+    ? this.variants.reduce((sum: number, v: any) => sum + (v.quantity || 0), 0)
+    : this.availableQuantity;
+});
 
-// Pre-save middleware
-productSchema.pre<IProduct & mongoose.Document>("save", function (next: (err?: any) => void) {
+// === Discount Calculator ===
+const calculateDiscount = (price: number, type: "percentage" | "fixed", value: number): number =>
+  type === "percentage" ? price * (1 - value / 100) : price - value;
+
+// === Pre Save: Auto discountedPrice ===
+productSchema.pre("save", function (next) {
   if (this.isModified("regularPrice") || this.isModified("discountType") || this.isModified("discountValue")) {
-    this.discountedPrice = calculateDiscountedPrice(
-      this.regularPrice,
-      this.discountType as "percentage" | "fixed",
-      this.discountValue
-    );
+    this.discountedPrice = calculateDiscount(this.regularPrice, this.discountType, this.discountValue);
   }
   next();
 });
 
-// Pre-updateOne / findOneAndUpdate
-["updateOne", "findOneAndUpdate"].forEach((hook) => {
-  productSchema.pre(hook as "updateOne" | "findOneAndUpdate", async function (next: (err?: any) => void) {
-    const update = this.getUpdate() as UpdateQuery<IProduct> | undefined;
-    if (!update) return next();
+// === Pre findOneAndUpdate: Recalculate on update ===
+productSchema.pre("findOneAndUpdate", async function (next) {
+  const update = this.getUpdate() as any;
+  if (!update) return next();
 
-    if (!update.$set) update.$set = {} as any;
+  const fields = ["regularPrice", "discountType", "discountValue"];
+  const hasChange = fields.some((f) => update.$set?.[f] !== undefined || update[f] !== undefined);
+  if (!hasChange) return next();
 
-    const doc = await this.model.findOne(this.getQuery()).lean<IProduct>();
+  try {
+    const doc = await this.model.findOne(this.getQuery());
     if (!doc) return next();
 
-    const regularPrice = update.$set.regularPrice ?? doc.regularPrice;
-    const discountType = update.$set.discountType ?? doc.discountType;
-    const discountValue = update.$set.discountValue ?? doc.discountValue;
+    const rp = update.$set?.regularPrice ?? update.regularPrice ?? doc.regularPrice;
+    const dt = update.$set?.discountType ?? update.discountType ?? doc.discountType;
+    const dv = update.$set?.discountValue ?? update.discountValue ?? doc.discountValue;
 
-    update.$set.discountedPrice = calculateDiscountedPrice(
-      regularPrice,
-      discountType as "percentage" | "fixed",
-      discountValue
-    );
+    if (!update.$set) update.$set = {};
+    update.$set.discountedPrice = calculateDiscount(rp, dt, dv);
 
     next();
-  });
+  } catch (err:any) {
+    next(err);
+  }
 });
 
+// === Indexes (O(1) & O(log n)) ===
+productSchema.index({ productCode: 1 }); // O(1)
+productSchema.index({ "variants.productCode": 1 }, { unique: true, sparse: true }); // O(1)
+productSchema.index({ shopId: 1, isActive: 1 }); // O(log n)
+productSchema.index({ categoryId: 1, isActive: 1 }); // O(log n)
+productSchema.index({ createdAt: -1 }); // O(log n + k)
 
-
-// Indexes for better query performance
-productSchema.index({ productCode: 1 });
-productSchema.index({ categoryName: 1 });
-productSchema.index({ isActive: 1, isFeatured: 1 });
-productSchema.index({ "variants.productCode": 1 });
-productSchema.index({ createdAt: -1 });
-
-// Static method to find active products
+// === Static: Active Products ===
 productSchema.statics.findActive = function () {
   return this.find({ isActive: true });
 };
 
-// Instance method to check if product is in stock
+// === Method: In Stock? ===
 productSchema.methods.isInStock = function () {
-  if (this.variants.length > 0) {
-    return this.variants.some((variant: any) => variant.quantity > 0);
-  }
-  return this.availableQuantity > 0;
+  return this.totalStock > 0;
 };
 
-// Instance method to get total stock
-productSchema.methods.getTotalStock = function () {
-  if (this.variants.length > 0) {
-    return this.variants.reduce(
-      (total: any, variant: any) => total + variant.quantity,
-      0
-    );
-  }
-  return this.availableQuantity;
-};
-
+// === Export ===
 export const ProductModel =
-  mongoose.models.Product ||
-  mongoose.model<IProduct, IProductModel>("Product", productSchema);
+  mongoose.models.Product || mongoose.model<IProduct, IProductModel>("Product", productSchema);
