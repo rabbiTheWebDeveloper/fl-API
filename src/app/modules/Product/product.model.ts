@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { IProduct, IProductModel } from "./product.interface";
+import { UpdateQuery } from "mongoose";
 
 const variantSchema = new mongoose.Schema(
   {
@@ -194,18 +195,39 @@ productSchema.pre("save", function (next) {
   next();
 });
 
+
+
 productSchema.pre("updateOne", async function (next) {
-  const update = this.getUpdate() as any;
-  if (
-    update.regularPrice !== undefined ||
-    update.discountType !== undefined ||
-    update.discountValue !== undefined
-  ) {
-    const doc = await this.model.findOne(this.getQuery());
-    update.discountedPrice = doc?.get("calculatedDiscountPrice");
+  // Type cast safely
+  const update = this.getUpdate() as UpdateQuery<IProduct> | undefined;
+  if (!update) return next();
+
+  // Ensure $set exists
+  if (!update.$set) update.$set = {} as any;
+
+  // Fetch the existing product
+  const doc = await this.model.findOne(this.getQuery());
+  if (!doc) return next();
+
+  // Get values (prefer update values, fallback to doc)
+  const regularPrice = update.$set.regularPrice ?? doc.regularPrice;
+  const discountType = update.$set.discountType ?? doc.discountType;
+  const discountValue = update.$set.discountValue ?? doc.discountValue;
+
+  // Calculate discounted price
+  let discountedPrice = regularPrice;
+  if (discountType === "percent") {
+    discountedPrice = regularPrice - (regularPrice * discountValue) / 100;
+  } else if (discountType === "fixed") {
+    discountedPrice = regularPrice - discountValue;
   }
+
+  // Set discounted price
+  update.$set.discountedPrice = discountedPrice;
+
   next();
 });
+
 
 // Indexes for better query performance
 productSchema.index({ productCode: 1 });

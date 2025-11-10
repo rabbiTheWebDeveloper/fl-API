@@ -222,13 +222,32 @@ productSchema.pre("save", function (next) {
 });
 productSchema.pre("updateOne", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
+        // Type cast safely
         const update = this.getUpdate();
-        if (update.regularPrice !== undefined ||
-            update.discountType !== undefined ||
-            update.discountValue !== undefined) {
-            const doc = yield this.model.findOne(this.getQuery());
-            update.discountedPrice = doc === null || doc === void 0 ? void 0 : doc.get("calculatedDiscountPrice");
+        if (!update)
+            return next();
+        // Ensure $set exists
+        if (!update.$set)
+            update.$set = {};
+        // Fetch the existing product
+        const doc = yield this.model.findOne(this.getQuery());
+        if (!doc)
+            return next();
+        // Get values (prefer update values, fallback to doc)
+        const regularPrice = (_a = update.$set.regularPrice) !== null && _a !== void 0 ? _a : doc.regularPrice;
+        const discountType = (_b = update.$set.discountType) !== null && _b !== void 0 ? _b : doc.discountType;
+        const discountValue = (_c = update.$set.discountValue) !== null && _c !== void 0 ? _c : doc.discountValue;
+        // Calculate discounted price
+        let discountedPrice = regularPrice;
+        if (discountType === "percent") {
+            discountedPrice = regularPrice - (regularPrice * discountValue) / 100;
         }
+        else if (discountType === "fixed") {
+            discountedPrice = regularPrice - discountValue;
+        }
+        // Set discounted price
+        update.$set.discountedPrice = discountedPrice;
         next();
     });
 });
