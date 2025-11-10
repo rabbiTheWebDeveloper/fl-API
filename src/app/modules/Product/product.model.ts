@@ -1,6 +1,5 @@
-import mongoose, { Schema } from "mongoose";
 import { IProduct, IProductModel } from "./product.interface";
-import { UpdateQuery } from "mongoose";
+import mongoose, {Schema, UpdateQuery, Document} from "mongoose";
 
 const variantSchema = new mongoose.Schema(
   {
@@ -174,59 +173,48 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Virtual for calculating discounted price
-productSchema.virtual("calculatedDiscountPrice").get(function () {
-  if (this.discountType === "percentage") {
-    return this.regularPrice - (this.regularPrice * this.discountValue) / 100;
-  } else {
-    return this.regularPrice - this.discountValue;
-  }
-});
+function calculateDiscountedPrice(regularPrice: number, discountType: "percentage" | "fixed", discountValue: number): number {
+  if (discountType === "percentage") return regularPrice - (regularPrice * discountValue) / 100;
+  return regularPrice - discountValue;
+}
 
-// Pre-save middleware to calculate discounted price
-productSchema.pre("save", function (next) {
-  if (
-    this.isModified("regularPrice") ||
-    this.isModified("discountType") ||
-    this.isModified("discountValue")
-  ) {
-    this.discountedPrice = this.get("calculatedDiscountPrice");
+// Pre-save middleware
+productSchema.pre<IProduct & mongoose.Document>("save", function (next: (err?: any) => void) {
+  if (this.isModified("regularPrice") || this.isModified("discountType") || this.isModified("discountValue")) {
+    this.discountedPrice = calculateDiscountedPrice(
+      this.regularPrice,
+      this.discountType as "percentage" | "fixed",
+      this.discountValue
+    );
   }
   next();
 });
 
+// Pre-updateOne / findOneAndUpdate
+["updateOne", "findOneAndUpdate"].forEach((hook) => {
+  productSchema.pre(hook as "updateOne" | "findOneAndUpdate", async function (next: (err?: any) => void) {
+    const update = this.getUpdate() as UpdateQuery<IProduct> | undefined;
+    if (!update) return next();
 
+    if (!update.$set) update.$set = {} as any;
 
-productSchema.pre("updateOne", async function (next) {
-  // Type cast safely
-  const update = this.getUpdate() as UpdateQuery<IProduct> | undefined;
-  if (!update) return next();
+    const doc = await this.model.findOne(this.getQuery()).lean<IProduct>();
+    if (!doc) return next();
 
-  // Ensure $set exists
-  if (!update.$set) update.$set = {} as any;
+    const regularPrice = update.$set.regularPrice ?? doc.regularPrice;
+    const discountType = update.$set.discountType ?? doc.discountType;
+    const discountValue = update.$set.discountValue ?? doc.discountValue;
 
-  // Fetch the existing product
-  const doc = await this.model.findOne(this.getQuery());
-  if (!doc) return next();
+    update.$set.discountedPrice = calculateDiscountedPrice(
+      regularPrice,
+      discountType as "percentage" | "fixed",
+      discountValue
+    );
 
-  // Get values (prefer update values, fallback to doc)
-  const regularPrice = update.$set.regularPrice ?? doc.regularPrice;
-  const discountType = update.$set.discountType ?? doc.discountType;
-  const discountValue = update.$set.discountValue ?? doc.discountValue;
-
-  // Calculate discounted price
-  let discountedPrice = regularPrice;
-  if (discountType === "percentage") {
-    discountedPrice = regularPrice - (regularPrice * discountValue) / 100;
-  } else if (discountType === "fixed") {
-    discountedPrice = regularPrice - discountValue;
-  }
-
-  // Set discounted price
-  update.$set.discountedPrice = discountedPrice;
-
-  next();
+    next();
+  });
 });
+
 
 
 // Indexes for better query performance
