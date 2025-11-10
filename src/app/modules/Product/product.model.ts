@@ -194,6 +194,19 @@ productSchema.pre("save", function (next) {
   next();
 });
 
+productSchema.pre("updateOne", async function (next) {
+  const update = this.getUpdate() as any;
+  if (
+    update.regularPrice !== undefined ||
+    update.discountType !== undefined ||
+    update.discountValue !== undefined
+  ) {
+    const doc = await this.model.findOne(this.getQuery());
+    update.discountedPrice = doc?.get("calculatedDiscountPrice");
+  }
+  next();
+});
+
 // Indexes for better query performance
 productSchema.index({ productCode: 1 });
 productSchema.index({ categoryName: 1 });
