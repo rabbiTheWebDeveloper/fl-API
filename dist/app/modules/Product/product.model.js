@@ -50,9 +50,8 @@ const variantSchema = new mongoose_1.Schema({
     values: { type: Map, of: String, required: true },
     image: { url: String, filename: String },
     price: { type: Number, default: 0 },
-    productCode: { type: String, required: true },
+    productCode: { type: String },
     quantity: { type: Number, default: 0, min: 0 },
-    description: String,
 }, { _id: true });
 // Delivery Charges
 const deliveryChargesSchema = new mongoose_1.Schema({
