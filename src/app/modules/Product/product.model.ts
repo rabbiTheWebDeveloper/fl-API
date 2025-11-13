@@ -25,7 +25,7 @@ const deliveryChargesSchema = new Schema({
 const productSchema = new Schema(
   {
     productName: { type: String, required: true, trim: true },
-    productCode: { type: String, required: true, unique: true, trim: true },
+    productCode: { type: String, unique: true, trim: true },
 
     shopId: { type: Schema.Types.ObjectId, ref: "Shop", index: true },
     userId: { type: Schema.Types.ObjectId, ref: "User" },

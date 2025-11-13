@@ -62,7 +62,7 @@ const deliveryChargesSchema = new mongoose_1.Schema({
 // Main Product Schema
 const productSchema = new mongoose_1.Schema({
     productName: { type: String, required: true, trim: true },
-    productCode: { type: String, required: true, unique: true, trim: true },
+    productCode: { type: String, unique: true, trim: true },
     shopId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Shop", index: true },
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
     categoryId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Category", index: true },
