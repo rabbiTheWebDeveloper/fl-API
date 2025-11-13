@@ -18,6 +18,10 @@ const shopInfoSchema = new Schema<IShopInfo>(
       required: true,
       trim: true,
     },
+    domain_verify: {
+      type: String,
+      trim: true,
+    },
     phone: {
       type: String,
       required: true,

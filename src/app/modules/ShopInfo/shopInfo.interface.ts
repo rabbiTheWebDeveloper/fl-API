@@ -4,6 +4,7 @@ export interface IShopInfo extends Document {
   shopId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   shopAddress: string;
+  domain_verify?: string;
   phone: string;
   defaultDeliveryLocation?: string;
   companyLogo?: {
