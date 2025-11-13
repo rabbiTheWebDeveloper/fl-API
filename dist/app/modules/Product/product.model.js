@@ -82,12 +82,6 @@ const productSchema = new mongoose_1.Schema({
     galleryImages: [{ url: String, filename: String, position: Number }],
     // Variants
     variants: [variantSchema],
-    variantConfig: {
-        variantType1: { type: String, enum: ["size", "color", "material", ""], default: "" },
-        variantType2: { type: String, enum: ["size", "color", "material", "none", ""], default: "" },
-        selectedOptions1: [String],
-        selectedOptions2: [String],
-    },
     // SEO & Status
     metaTitle: String,
     metaDescription: String,

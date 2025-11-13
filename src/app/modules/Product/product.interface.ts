@@ -22,19 +22,11 @@ interface IDeliveryCharges {
   subarea: number;
 }
 
-// Variant Config Interface
-interface IVariantConfig {
-  variantType1: "size" | "color" | "material" | "";
-  variantType2: "size" | "color" | "material" | "none" | "";
-  selectedOptions1: string[];
-  selectedOptions2: string[];
-}
-
 // Main Product Interface
 export interface IProduct extends Document {
   productName: string;
   productCode: string;
-  categoryId:Types.ObjectId;
+  categoryId: Types.ObjectId;
   shopId: Types.ObjectId;
   userId?: Types.ObjectId;
   availableQuantity: number;
@@ -58,10 +50,7 @@ export interface IProduct extends Document {
     filename?: string;
     position?: number;
   }[];
-
   variants: IVariant[];
-  variantConfig: IVariantConfig;
-
   metaTitle?: string;
   metaDescription?: string;
   isActive: boolean;
